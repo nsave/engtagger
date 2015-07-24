@@ -51,15 +51,9 @@ class EngTagger
 
   # Return a regexp from a string argument that matches an XML-style pos tag
   def self.get_ext(*pos_tags)
-    pos_tags.compact!
     return nil if pos_tags.empty?
-    if pos_tags.count > 1
-      raw_regexps = pos_tags.map { |pos_tag| "<#{pos_tag}>[^<]+</#{pos_tag}>" }
-      return Regexp.new("(?:#{raw_regexps.join('|')})")
-    else
-      tag = pos_tags.first
-      return Regexp.new("<#{tag}>[^<]+</#{tag}>\s*")
-    end
+    raw_regexps = pos_tags.map { |pos_tag| "<#{pos_tag}>[^<]+</#{pos_tag}>\s*" }
+    Regexp.new("(?:#{raw_regexps.join('|')})")
   end
 
   # Regexps to match XML-style part-of-speech tags
@@ -287,15 +281,7 @@ class EngTagger
   # Data Consortium'' as a single unit, rather than as three individual
   # proper nouns. This method does not stem the found words.
   def get_proper_nouns(tagged)
-    return nil unless valid_text(tagged)
-    trimmed = tagged.scan(NNP).map do |n|
-      strip_tags(n)
-    end
-    nnp = Hash.new(0)
-    trimmed.each do |n|
-      next unless n.length < 100  # sanity check on word length
-      nnp[n] += 1 unless n =~ /\A\s*\z/
-    end
+    nnp = get_words_frequency_map(tagged, NNP, skipp_stemming: false)
     # Now for some fancy resolution stuff...
     nnp.keys.each do |key|
       words = key.split(/\s/)
@@ -323,169 +309,55 @@ class EngTagger
   # Given a POS-tagged text, this method returns all nouns and their
   # occurrence frequencies.
   def get_nouns(tagged)
-    return nil unless valid_text(tagged)
-    NN
-    trimmed = tagged.scan(NN).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, NN)
   end
 
   def get_infinitive_verbs(tagged)
-    return nil unless valid_text(tagged)
-    VB
-    trimmed = tagged.scan(VB).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, VB)
   end
 
   def get_past_tense_verbs(tagged)
-    return nil unless valid_text(tagged)
-    VBD
-    trimmed = tagged.scan(VBD).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, VBD)
   end
 
   def get_gerund_verbs(tagged)
-    return nil unless valid_text(tagged)
-    VBG
-    trimmed = tagged.scan(VBG).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, VBG)
   end
 
   def get_passive_verbs(tagged)
-    return nil unless valid_text(tagged)
-    PART
-    trimmed = tagged.scan(PART).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, PART)
   end
 
-
   def get_base_present_verbs(tagged)
-    return nil unless valid_text(tagged)
-    VBP
-    trimmed = tagged.scan(VBP).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, VBP)
   end
 
   def get_present_verbs(tagged)
-    return nil unless valid_text(tagged)
-    VBZ
-    trimmed = tagged.scan(VBZ).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, VBZ)
   end
 
   def get_adjectives(tagged)
-    return nil unless valid_text(tagged)
-    JJ
-    trimmed = tagged.scan(JJ).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, JJ)
   end
 
   def get_comparative_adjectives(tagged)
-    return nil unless valid_text(tagged)
-    JJR
-    trimmed = tagged.scan(JJR).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, JJR)
   end
 
   def get_superlative_adjectives(tagged)
-    return nil unless valid_text(tagged)
-    JJS
-    trimmed = tagged.scan(JJS).map do |n|
-      strip_tags(n)
-    end
-    ret = Hash.new(0)
-    trimmed.each do |n|
-      n = stem(n)
-      next unless n.length < 100  # sanity check on word length
-      ret[n] += 1 unless n =~ /\A\s*\z/
-    end
-    return ret
+    get_words_frequency_map(tagged, JJS)
   end
 
   # Given a POS-tagged text, this method returns only the maximal noun phrases.
   # May be called directly, but is also used by get_noun_phrases
-  def get_max_noun_phrases(tagged)
-    return unless valid_text(tagged)
-    mn_phrases = tagged.scan(@@mnp).map do |m|
-      strip_tags(m)
+  def get_max_noun_phrases(tagged_text)
+    return nil unless valid_text(tagged_text)
+
+    words = parse_tagged_words(tagged_text, @@mnp, skipp_stemming: true) do |word|
+      word = stem(word) if word !~ /\s/ # stem single words
+      word
     end
-    ret = Hash.new(0)
-    mn_phrases.each do |p|
-      p = stem(p) unless p =~ /\s/  # stem single words
-      ret[p] += 1 unless p =~ /\A\s*\z/
-    end
-    return ret
+    array_to_frequency_map(words)
   end
 
   # Similar to get_words, but requires a POS-tagged text as an argument.
@@ -493,7 +365,6 @@ class EngTagger
     return nil unless valid_text(tagged)
     found = Hash.new(0)
     phrase_ext = /(?:#{PREP}|#{DET}|#{NUM})+/xo
-    binding.pry
     scanned = tagged.scan(@@mnp)
     # Find MNPs in the text, one sentence at a time
     # Record and split if the phrase is extended by a (?:PREP|DET|NUM)
@@ -543,6 +414,35 @@ class EngTagger
     end
     File.open(@conf[:tag_path], 'w') do |f|
       Marshal.dump(@@hmm, f)
+    end
+  end
+
+  protected
+
+  def get_words_frequency_map(tagged_text, regexp, options = {})
+    return nil unless valid_text(tagged_text)
+    words = parse_tagged_words(tagged_text, regexp, options) do |word|
+      return nil if word.length > 100 || word =~ /^\s*$/
+      word
+    end
+    array_to_frequency_map(words)
+  end
+
+  def parse_tagged_words(tagged_text, regexp, options = {})
+    skipp_stemming = options[:skipp_stemming]
+
+    tagged_text.scan(regexp).map do |tagged_word|
+      word = strip_tags(tagged_word)
+      word = stem(word)   if !skipp_stemming
+      word = yield(word)  if block_given?
+      word
+    end.compact
+  end
+
+  def array_to_frequency_map(array)
+    array.inject(Hash.new(0)) do |hash, element|
+      hash[element] += 1
+      hash
     end
   end
 
