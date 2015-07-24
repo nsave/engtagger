@@ -51,9 +51,15 @@ class EngTagger
 
   # Return a regexp from a string argument that matches an XML-style pos tag
   def self.get_ext(*pos_tags)
+    pos_tags.compact!
     return nil if pos_tags.empty?
-    raw_regexps = pos_tags.map { |pos_tag| "<#{pos_tag}>[^<]+</#{pos_tag}>" }
-    return Regexp.new("(?:#{raw_regexps.join('|')})")
+    if pos_tags.count > 1
+      raw_regexps = pos_tags.map { |pos_tag| "<#{pos_tag}>[^<]+</#{pos_tag}>" }
+      return Regexp.new("(?:#{raw_regexps.join('|')})")
+    else
+      tag = pos_tags.first
+      return Regexp.new("<#{tag}>[^<]+</#{tag}>\s*")
+    end
   end
 
   # Regexps to match XML-style part-of-speech tags
@@ -487,6 +493,7 @@ class EngTagger
     return nil unless valid_text(tagged)
     found = Hash.new(0)
     phrase_ext = /(?:#{PREP}|#{DET}|#{NUM})+/xo
+    binding.pry
     scanned = tagged.scan(@@mnp)
     # Find MNPs in the text, one sentence at a time
     # Record and split if the phrase is extended by a (?:PREP|DET|NUM)
