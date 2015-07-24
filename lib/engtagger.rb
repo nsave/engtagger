@@ -50,9 +50,10 @@ class EngTagger
   end
 
   # Return a regexp from a string argument that matches an XML-style pos tag
-  def self.get_ext(tag = nil)
-    return nil unless tag
-    return Regexp.new("<#{tag}>[^<]+</#{tag}>\s*")
+  def self.get_ext(*pos_tags)
+    return nil if pos_tags.empty?
+    raw_regexps = pos_tags.map { |pos_tag| "<#{pos_tag}>[^<]+</#{pos_tag}>" }
+    return Regexp.new("(?:#{raw_regexps.join('|')})")
   end
 
   # Regexps to match XML-style part-of-speech tags
